@@ -4,14 +4,14 @@ from datetime import datetime
 
 import pandas as pd
 import requests
+from dotenv import load_dotenv
 
 
-RESPONSES_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqjtYipKDHEQwx5OIho6pC_WOwKyBHMtYIqm4my9PvGrTZlHMnoYq-F68RxFhb2Hjt39HdIHB6QfpV/pub?gid=719878135&single=true&output=csv"
-EVENTS_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTqjtYipKDHEQwx5OIho6pC_WOwKyBHMtYIqm4my9PvGrTZlHMnoYq-F68RxFhb2Hjt39HdIHB6QfpV/pub?gid=930946685&single=true&output=csv"
 OUT_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
-def count_attendance(responses: pd.DataFrame, events: pd.DataFrame, column: str) -> pd.DataFrame:
+def count_attendance(responses: pd.DataFrame,
+                     events: pd.DataFrame, column: str) -> pd.DataFrame:
     filtered_events = events[events["Activity Type"] == column]
     filtered_responses = responses[["HKN Handle", "Week", "Secret Word"]][responses["Activity Type"] == column]
 
@@ -24,15 +24,18 @@ def count_attendance(responses: pd.DataFrame, events: pd.DataFrame, column: str)
 
 
 def main() -> None:
+    responses_url = os.getenv("RESPONSES_URL")
+    events_url = os.getenv("EVENTS_URL")
+
     logging.info("Fetching latest HKN attendance data")
-    responses_req = requests.get(RESPONSES_URL, timeout=10)
-    events_req = requests.get(EVENTS_URL, timeout=10)
+    responses_req = requests.get(responses_url, timeout=10)
+    events_req = requests.get(events_url, timeout=10)
 
-    with open(os.path.join(os.getcwd(), "responses.csv"), 'wb') as f:
-        f.write(responses_req.content)
+    with open(os.path.join(os.getcwd(), "responses.csv"), 'wb') as fp:
+        fp.write(responses_req.content)
 
-    with open(os.path.join(os.getcwd(), "events.csv"), 'wb') as f:
-        f.write(events_req.content)
+    with open(os.path.join(os.getcwd(), "events.csv"), 'wb') as fp:
+        fp.write(events_req.content)
 
     logging.info("Reading data into DataFrames")
     responses = pd.read_csv(os.path.join(os.getcwd(), "responses.csv"))
@@ -66,6 +69,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    load_dotenv()
     ts = datetime.now().isoformat(timespec="seconds")
     logging.basicConfig(
         filename=os.path.join(OUT_PATH, f"attendance-tracker-{ts}.log"),
