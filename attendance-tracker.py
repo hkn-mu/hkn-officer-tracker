@@ -62,7 +62,7 @@ def main() -> None:
         .merge(icd_attendance, how="outer", on="HKN Handle") \
         .merge(qsm_attendance, how="outer", on="HKN Handle") \
         .fillna(0)
-    attendance.iloc[:, 1:] = attendance.iloc[:, 1:].astype(int)
+    attendance[attendance.columns[1:]] = attendance[attendance.columns[1:]].astype(int)
 
     logging.info("Saving attendance file as \"attendance.csv\"")
     attendance.sort_values("HKN Handle").to_csv(os.path.join(OUT_PATH, "attendance.csv"), index=False)
