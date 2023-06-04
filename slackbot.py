@@ -6,7 +6,9 @@ import json
 import logging
 import os
 import socketserver
+import time
 import urllib.parse
+from pathlib import Path
 
 import pandas as pd
 import requests
@@ -16,7 +18,7 @@ from slack_sdk.errors import SlackApiError
 
 
 HOST, PORT = "localhost", 8000
-OUT_PATH = os.path.dirname(os.path.realpath(__file__))
+OUT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 
 
 class MyRequestHandler(http.server.BaseHTTPRequestHandler):
@@ -68,7 +70,7 @@ def get_requirements(user_id: str, user_name: str) -> dict:
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "If you have any questions/bug reports about thus feature, feel free to ping @bryanngo.",
+                "text": "If you have any questions/bug reports about this feature, feel free to ping <@bryanngo>.",
             },
         },
     ]
@@ -86,7 +88,7 @@ def send_message(channel_id: str, user_id: str, requirements: str) -> None:
         _ = client.chat_postEphemeral(
             channel=channel_id,
             blocks=requirements,
-            text="",
+            text="placeholder",
             user=user_id,
         )
     except SlackApiError as e:
@@ -178,12 +180,19 @@ def cache_attendance() -> None:
 
     logging.info('Saving attendance file as "attendance.csv"')
     attendance.sort_values("HKN Handle").to_csv(
-        os.path.join(OUT_PATH, "attendance.csv"), index=False
+        OUT_PATH / "attendance.csv", index=False
     )
 
 
 def fetch_attendance() -> pd.DataFrame:
-    return pd.read_csv(os.path.join(OUT_PATH, "attendance.csv"))
+    """
+    Fetches the attendance from the cache on disk.
+    """
+    sheet = OUT_PATH / "attendance.csv"
+    one_week = 604_800.0
+    if not os.path.exists(sheet) or time.time() - os.path.getmtime(sheet) >= one_week:
+        cache_attendance()
+    return pd.read_csv(sheet)
 
 
 def main() -> None:
