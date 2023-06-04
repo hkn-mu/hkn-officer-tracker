@@ -1,5 +1,5 @@
 # pylint: disable=logging-fstring-interpolation
-# pylint: disable=logging-format-interpolation
+# pylint: enable=logging-format-interpolation
 
 import http.server
 import json
@@ -22,7 +22,17 @@ OUT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
 
 
 class MyRequestHandler(http.server.BaseHTTPRequestHandler):
+    """
+    Custom handler for Slack bot slash commands.
+    We only need it to handle POST requests as required by Slack:
+    https://api.slack.com/interactivity/slash-commands#app_command_handling
+    """
+
     def do_POST(self) -> None:
+        """
+        Handles any POST requests by constructing a message and
+        sending it to the Slack API to send to the user.
+        """
         self.send_response(200)
         self.end_headers()
         content_len = int(self.headers.get("Content-Length"))
@@ -91,8 +101,8 @@ def send_message(channel_id: str, user_id: str, requirements: str) -> None:
             text="placeholder",
             user=user_id,
         )
-    except SlackApiError as e:
-        print(e.response["error"])
+    except SlackApiError as error:
+        print(error.response["error"])
 
 
 def init_webserver() -> None:
