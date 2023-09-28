@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "hkn-officer-tracker"
+version = "0.1.0"
+description = "Officer requirement tracker and web app for HKN"
+authors = ["Bryan Ngo <bryanngo@berkeley.edu>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10,<3.13"
+pandas = "^2.1.1"
+python-dotenv = "^1.0.0"
+requests = "^2.31.0"
+slack-sdk = "^3.22.0"
+flask = "^2.3.3"
+flup6 = "^1.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

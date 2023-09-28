@@ -18,7 +18,7 @@ from slack_sdk.errors import SlackApiError
 
 
 HOST, PORT = "localhost", 8000
-OUT_PATH = Path(os.path.dirname(os.path.realpath(__file__)))
+OUT_PATH = Path(os.path.dirname(os.path.realpath(__file__))) / "data"
 
 
 class MyRequestHandler(http.server.BaseHTTPRequestHandler):
@@ -59,10 +59,8 @@ def get_requirements(user_id: str, user_name: str) -> dict:
     Returns a formatted message of the user's requirements.
     """
     attendance_df = fetch_attendance()
-    payload = json.loads(
-        attendance_df[attendance_df["HKN Handle"] == user_name].to_json(
-            orient="records"
-        )
+    payload = attendance_df[attendance_df["HKN Handle"] == user_name].to_dict(
+        orient="records"
     )[0]
     attendance_block = "\n".join([f"*{k}*: {v}" for k, v in payload.items()][1:])
     blocks = [
@@ -126,19 +124,17 @@ def count_attendance(
         responses["Activity Type"] == column
     ]
 
-    df_dict = dict(tuple(filtered_responses.groupby(["HKN Handle"])))
+    valid_attendance = pd.merge(
+        filtered_responses,
+        filtered_events,
+        left_on=["Week", "Secret Word"],
+        right_on=["Week", "Secret Word"],
+        how="inner",
+    )
 
-    return pd.DataFrame(
-        [
-            (
-                k,
-                v.merge(filtered_events, how="inner", on=["Week", "Secret Word"]).shape[
-                    0
-                ],
-            )
-            for k, v in df_dict.items()
-        ],
-        columns=["HKN Handle", f"{column}s Attended"],
+    counted_attendance = valid_attendance.groupby("HKN Handle", as_index=False).count()
+    return counted_attendance[["HKN Handle", "Week"]].rename(
+        columns={"Week": f"{column}s Attended"}
     )
 
 
@@ -200,7 +196,8 @@ def fetch_attendance() -> pd.DataFrame:
     """
     sheet = OUT_PATH / "attendance.csv"
     one_week = 604_800.0
-    if not os.path.exists(sheet) or time.time() - os.path.getmtime(sheet) >= one_week:
+    # if not os.path.exists(sheet) or time.time() - os.path.getmtime(sheet) >= one_week:
+    if True:
         cache_attendance()
     return pd.read_csv(sheet)
 
@@ -209,7 +206,7 @@ def main() -> None:
     """
     Main driver for the Slackbot.
     """
-    logging.basicConfig(level=logging.DEBUG)
+    # logging.basicConfig(level=logging.DEBUG)
     load_dotenv()
 
     init_webserver()

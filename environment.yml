@@ -1,6 +1,0 @@
-name: officer-tracking-env
-dependencies:
-  - pandas
-  - python-dotenv
-  - requests
-  - conda-forge::slack_sdk
