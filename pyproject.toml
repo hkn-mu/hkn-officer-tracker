@@ -6,7 +6,7 @@ authors = ["Bryan Ngo <bryanngo@berkeley.edu>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10,<3.13"
+python = "^3.9,<3.13"
 pandas = "^2.1.1"
 python-dotenv = "^1.0.0"
 requests = "^2.31.0"
