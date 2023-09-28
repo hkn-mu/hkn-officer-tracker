@@ -1,12 +1,12 @@
+"""Slackbot for HKN officer requirement tracking."""
+
 # pylint: disable=logging-fstring-interpolation
 # pylint: enable=logging-format-interpolation
 
 import http.server
-import json
 import logging
 import os
 import socketserver
-import time
 import urllib.parse
 from pathlib import Path
 
@@ -195,10 +195,7 @@ def fetch_attendance() -> pd.DataFrame:
     Fetches the attendance from the cache on disk.
     """
     sheet = OUT_PATH / "attendance.csv"
-    one_week = 604_800.0
-    # if not os.path.exists(sheet) or time.time() - os.path.getmtime(sheet) >= one_week:
-    if True:
-        cache_attendance()
+    cache_attendance()
     return pd.read_csv(sheet)
 
 
