@@ -3,42 +3,37 @@
 # pylint: disable=logging-fstring-interpolation
 # pylint: enable=logging-format-interpolation
 
-import http.server
 import logging
 import os
-import socketserver
 import urllib.parse
 from pathlib import Path
 
 import pandas as pd
 import requests
 from dotenv import load_dotenv
+from flask import Flask, request
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 
-HOST, PORT = "localhost", 8000
+app = Flask(__name__)
 OUT_PATH = Path(os.path.dirname(os.path.realpath(__file__))) / "data"
 
 
-class MyRequestHandler(http.server.BaseHTTPRequestHandler):
+@app.route("/", methods=["POST"])
+def do_POST() -> None:
     """
-    Custom handler for Slack bot slash commands.
-    We only need it to handle POST requests as required by Slack:
-    https://api.slack.com/interactivity/slash-commands#app_command_handling
+    Handles any POST requests by constructing a message and
+    sending it to the Slack API to send to the user.
     """
-
-    def do_POST(self) -> None:
-        """
-        Handles any POST requests by constructing a message and
-        sending it to the Slack API to send to the user.
-        """
-        self.send_response(200)
-        self.end_headers()
-        content_len = int(self.headers.get("Content-Length"))
-        channel_id, user_id, user_name = parse_response(self.rfile.read(content_len))
+    if request.method == "POST":
+        content_len = int(request.headers.get("Content-Length"))
+        channel_id, user_id, user_name = parse_response(
+            request.stream.read(content_len)
+        )
         requirements = get_requirements(user_id, user_name)
         send_message(channel_id, user_id, requirements)
+    return "Success", 200
 
 
 def parse_response(stream: bytes) -> tuple[str, str, str]:
@@ -101,16 +96,6 @@ def send_message(channel_id: str, user_id: str, requirements: str) -> None:
         )
     except SlackApiError as error:
         print(error.response["error"])
-
-
-def init_webserver() -> None:
-    """
-    Starts a webserver to host the slash command response URLs.
-    """
-    handler = MyRequestHandler
-    with socketserver.TCPServer((HOST, PORT), handler) as my_server:
-        logging.info(f"Starting server at port {PORT}")
-        my_server.serve_forever()
 
 
 def count_attendance(
@@ -206,7 +191,7 @@ def main() -> None:
     # logging.basicConfig(level=logging.DEBUG)
     load_dotenv()
 
-    init_webserver()
+    app.run(debug=True)
 
 
 if __name__ == "__main__":
