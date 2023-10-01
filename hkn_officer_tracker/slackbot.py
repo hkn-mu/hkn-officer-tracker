@@ -135,15 +135,15 @@ def cache_attendance() -> None:
     responses_req = requests.get(responses_url, timeout=10)
     events_req = requests.get(events_url, timeout=10)
 
-    with open(os.path.join(os.getcwd(), "responses.csv"), "wb") as fp:
+    with open(OUT_PATH / "responses.csv", "wb") as fp:
         fp.write(responses_req.content)
 
-    with open(os.path.join(os.getcwd(), "events.csv"), "wb") as fp:
+    with open(OUT_PATH / "events.csv", "wb") as fp:
         fp.write(events_req.content)
 
     logging.info("Reading data into DataFrames")
-    responses = pd.read_csv(os.path.join(os.getcwd(), "responses.csv"))
-    events = pd.read_csv(os.path.join(os.getcwd(), "events.csv"))
+    responses = pd.read_csv(OUT_PATH / "responses.csv")
+    events = pd.read_csv(OUT_PATH / "events.csv")
 
     responses["HKN Handle"] = responses["HKN Handle"].str.strip().str.lower()
     responses["Secret Word"] = responses["Secret Word"].str.strip().str.lower()
