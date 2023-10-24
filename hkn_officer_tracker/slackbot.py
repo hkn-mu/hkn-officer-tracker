@@ -11,29 +11,11 @@ from pathlib import Path
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-from flask import Flask, request
+from flask import current_app
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
-
-app = Flask(__name__)
 OUT_PATH = Path(os.path.dirname(os.path.realpath(__file__))) / "data"
-
-
-@app.route("/", methods=["POST"])
-def do_POST() -> None:
-    """
-    Handles any POST requests by constructing a message and
-    sending it to the Slack API to send to the user.
-    """
-    if request.method == "POST":
-        content_len = int(request.headers.get("Content-Length"))
-        channel_id, user_id, user_name = parse_response(
-            request.stream.read(content_len)
-        )
-        requirements = get_requirements(user_id, user_name)
-        send_message(channel_id, user_id, requirements)
-    return "", 200
 
 
 def parse_response(stream: bytes) -> tuple[str, str, str]:
@@ -191,7 +173,7 @@ def main() -> None:
     # logging.basicConfig(level=logging.DEBUG)
     load_dotenv()
 
-    app.run(debug=True)
+    current_app.run(debug=True)
 
 
 if __name__ == "__main__":
