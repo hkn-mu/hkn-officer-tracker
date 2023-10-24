@@ -195,7 +195,8 @@ def main() -> None:
     Main driver for the Slackbot.
     """
     # logging.basicConfig(level=logging.DEBUG)
-    current_app.run(debug=True)
+    app = create_app()
+    app.run(debug=True)
 
 
 if __name__ == "__main__":
