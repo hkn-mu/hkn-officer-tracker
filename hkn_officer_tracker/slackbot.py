@@ -11,7 +11,7 @@ from pathlib import Path
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-from flask import current_app
+from flask import Flask, request, current_app
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
@@ -166,13 +166,35 @@ def fetch_attendance() -> pd.DataFrame:
     return pd.read_csv(sheet)
 
 
+def create_app():
+    app = Flask(__name__)
+
+    with app.app_context():
+        load_dotenv()
+
+    @app.route("/", methods=["POST"])
+    def do_POST() -> None:
+        """
+        Handles any POST requests by constructing a message and
+        sending it to the Slack API to send to the user.
+        """
+        if request.method == "POST":
+            content_len = int(request.headers.get("Content-Length"))
+            channel_id, user_id, user_name = parse_response(
+                request.stream.read(content_len)
+            )
+            requirements = get_requirements(user_id, user_name)
+            send_message(channel_id, user_id, requirements)
+        return "", 200
+
+    return app
+
+
 def main() -> None:
     """
     Main driver for the Slackbot.
     """
     # logging.basicConfig(level=logging.DEBUG)
-    load_dotenv()
-
     current_app.run(debug=True)
 
 
