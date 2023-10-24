@@ -33,7 +33,7 @@ def do_POST() -> None:
         )
         requirements = get_requirements(user_id, user_name)
         send_message(channel_id, user_id, requirements)
-    return "Success", 200
+    return "", 200
 
 
 def parse_response(stream: bytes) -> tuple[str, str, str]:
