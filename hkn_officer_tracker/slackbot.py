@@ -3,8 +3,10 @@
 # pylint: disable=logging-fstring-interpolation
 # pylint: enable=logging-format-interpolation
 
+import datetime
 import logging
 import os
+import time
 import urllib.parse
 from pathlib import Path
 
@@ -16,6 +18,9 @@ from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
 OUT_PATH = Path(os.path.dirname(os.path.realpath(__file__))) / "data"
+RESPONSES = OUT_PATH / "responses.csv"
+EVENTS = OUT_PATH / "events.csv"
+ATTENDANCE = OUT_PATH / "attendance.csv"
 
 
 def parse_response(stream: bytes) -> tuple[str, str, str]:
@@ -117,15 +122,15 @@ def cache_attendance() -> None:
     responses_req = requests.get(responses_url, timeout=10)
     events_req = requests.get(events_url, timeout=10)
 
-    with open(OUT_PATH / "responses.csv", "wb") as fp:
+    with open(RESPONSES, "wb") as fp:
         fp.write(responses_req.content)
 
-    with open(OUT_PATH / "events.csv", "wb") as fp:
+    with open(RESPONSES, "wb") as fp:
         fp.write(events_req.content)
 
     logging.info("Reading data into DataFrames")
-    responses = pd.read_csv(OUT_PATH / "responses.csv")
-    events = pd.read_csv(OUT_PATH / "events.csv")
+    responses = pd.read_csv(RESPONSES)
+    events = pd.read_csv(RESPONSES)
 
     responses["HKN Handle"] = responses["HKN Handle"].str.strip().str.lower()
     responses["Secret Word"] = responses["Secret Word"].str.strip().str.lower()
@@ -152,9 +157,7 @@ def cache_attendance() -> None:
     attendance[attendance.columns[1:]] = attendance[attendance.columns[1:]].astype(int)
 
     logging.info('Saving attendance file as "attendance.csv"')
-    attendance.sort_values("HKN Handle").to_csv(
-        OUT_PATH / "attendance.csv", index=False
-    )
+    attendance.sort_values("HKN Handle").to_csv(ATTENDANCE, index=False)
 
 
 def fetch_attendance() -> pd.DataFrame:
@@ -162,7 +165,9 @@ def fetch_attendance() -> pd.DataFrame:
     Fetches the attendance from the cache on disk.
     """
     sheet = OUT_PATH / "attendance.csv"
-    cache_attendance()
+    one_week = datetime.timedelta(weeks=1)
+    if os.path.getmtime(RESPONSES) - time.time() > one_week.total_seconds():
+        cache_attendance()
     return pd.read_csv(sheet)
 
 
