@@ -125,12 +125,12 @@ def cache_attendance() -> None:
     with open(RESPONSES, "wb") as fp:
         fp.write(responses_req.content)
 
-    with open(RESPONSES, "wb") as fp:
+    with open(EVENTS, "wb") as fp:
         fp.write(events_req.content)
 
     logging.info("Reading data into DataFrames")
     responses = pd.read_csv(RESPONSES)
-    events = pd.read_csv(RESPONSES)
+    events = pd.read_csv(EVENTS)
 
     responses["HKN Handle"] = responses["HKN Handle"].str.strip().str.lower()
     responses["Secret Word"] = responses["Secret Word"].str.strip().str.lower()
